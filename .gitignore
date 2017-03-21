@@ -3,3 +3,5 @@
 /settings.properties
 
 __pycache__/*
+
+settings.properties
