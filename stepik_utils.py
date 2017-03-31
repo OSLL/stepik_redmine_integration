@@ -17,9 +17,13 @@ def list_pages(api_url, objects, token):
     while has_next:
         response = requests.get(api_url + '{}page={}'.format(connector, page),
                                 headers={'Authorization': 'Bearer ' + token}).json()
-        yield [{obj: response[obj] for obj in objects}]
-        page += 1
-        has_next = response['meta']['has_next']
+        try:
+            yield [{obj: response[obj] for obj in objects}]
+            page += 1
+            has_next = response['meta']['has_next']
+        except KeyError:
+            print(response)
+            has_next=False
 
 
 def fetch_object(api_host, token, obj_class, query_string='', additional_objects=None):
