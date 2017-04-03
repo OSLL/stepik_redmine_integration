@@ -37,14 +37,15 @@ def fetch_object(api_host, token, obj_class, query_string='', additional_objects
     return [obj for page in response for obj in page]       # Example of using generator
 
 
-def get_comment(api_host, token, comment_id):
+def get_comment(api_host, token, comment_id, link_to_comment):
     comment = fetch_object(api_host, token, 'comments', '/{}'.format(comment_id), ['users'])
 
     if not comment:
         return None
 
     user = User(comment[0]['users'][0]['id'])
-    comment = Comment(comment[0]['comments'][0]['id'], user, comment[0]['comments'][0]['text'])
+    comment = Comment(comment[0]['comments'][0]['id'], user, remove_html_tags(comment[0]['comments'][0]['text']),
+                      link_to_comment)
     return comment
 
 
@@ -53,4 +54,9 @@ def get_comment_ids(link_to_comment):
     found_link = pattern.search(link_to_comment).groupdict()
     discussion = found_link['discussion']
     reply = found_link['reply']
-    return discussion, reply or discussion
+    return discussion, reply or discussion, link_to_comment
+
+
+def remove_html_tags(text):
+    clean = re.compile('<.*?>')
+    return re.sub(clean, ' ', text)

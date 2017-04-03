@@ -43,21 +43,17 @@ def create_new_task(comment):
     issue = redmine_server.issue.new()
     issue.project_id = project_name
     issue.subject = 'User {} comment {}'.format(comment.user, current_id)
-    issue.description = comment.text
+    issue.description = '{} \n\n {}'.format(comment.text, comment.link)
     issue.custom_fields = [{'id': 16, 'value': current_id}, {'id': 15, 'value': comment.user.id}]
     issue.save()
 
     return issue
 
 
-for parent_id, current_id in all_ids:
+for parent_id, current_id, link in all_ids:
     # Try to load root and current comments
-    parent = get_comment(stepik_api_host, token, parent_id)
-    current = get_comment(stepik_api_host, token, current_id)
-
-    if not parent:
-        print("skip", parent_id)
-        continue
+    # parent = get_comment(stepik_api_host, token, parent_id)
+    current = get_comment(stepik_api_host, token, current_id, link)
 
     if not current:
         print("skip", current_id)
