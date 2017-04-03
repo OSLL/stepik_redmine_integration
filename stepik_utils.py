@@ -17,13 +17,12 @@ def list_pages(api_url, objects, token):
     while has_next:
         response = requests.get(api_url + '{}page={}'.format(connector, page),
                                 headers={'Authorization': 'Bearer ' + token}).json()
-        try:
-            yield [{obj: response[obj] for obj in objects}]
-            page += 1
-            has_next = response['meta']['has_next']
-        except KeyError:
-            print(response)
-            has_next=False
+        # Hack for permission denied
+        if 'meta' not in response:
+            return []
+        yield [{obj: response[obj] for obj in objects}]
+        page += 1
+        has_next = response['meta']['has_next']
 
 
 def fetch_object(api_host, token, obj_class, query_string='', additional_objects=None):
@@ -40,6 +39,10 @@ def fetch_object(api_host, token, obj_class, query_string='', additional_objects
 
 def get_comment(api_host, token, comment_id):
     comment = fetch_object(api_host, token, 'comments', '/{}'.format(comment_id), ['users'])
+
+    if not comment:
+        return None
+
     user = User(comment[0]['users'][0]['id'])
     comment = Comment(comment[0]['comments'][0]['id'], user, comment[0]['comments'][0]['text'])
     return comment

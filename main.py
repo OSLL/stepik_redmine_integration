@@ -39,39 +39,34 @@ redmine_server = Redmine(redmine_host, key=redmine_api_key)
 
 project = redmine_server.project.get(project_name)
 
-# issue = redmine_server.issue.get(resource_id=8055)  # TODO custom fields not work
-# for r in issue.custom_fields.values():
-#     print(r)
-
-
 for parent_id, current_id in all_ids:
     parent = get_comment(stepik_api_host, token, parent_id)
     current = get_comment(stepik_api_host, token, current_id)
 
-    # issue = redmine_server.issue.new()
-    # issue.project_id = project_name
-    # issue.subject = 'User {} comment {}'.format(parent.user, parent_id)
-    # issue.description = parent.text
-    # issue.custom_fields = [{'id': 1, 'value': parent_id}]  # TODO not work?
-    # issue.save()
+    if not parent:
+        print("skip", parent_id)
+        continue
 
-    parent_task = redmine_server.issue.filter(project_id=project_name, cf_1=parent_id)
+    if not current:
+        print("skip", current_id)
+        continue
+
+    parent_task = redmine_server.issue.filter(project_id=project_name, cf_16=parent_id)
     parent_task_id = parent_task[0].id if parent_task else None
 
-    current_task = redmine_server.issue.filter(project_id=project_name, cf_1=current_id)
+    current_task = redmine_server.issue.filter(project_id=project_name, cf_16=current_id)
     if current_task:
         print("skip", current_id, current_task.resources)
         continue
-    print('handle', current_id)
+
     sub_issue = redmine_server.issue.new()
     sub_issue.project_id = project_name
     sub_issue.subject = 'User {} comment {}'.format(current.user, current_id)
     sub_issue.description = current.text
-    # TODO: parent not work?
-    # sub_issue.parent_issue_id = parent_id
-    sub_issue.custom_fields = [{'id': 1, 'value': current_id}]
+    sub_issue.custom_fields = [{'id': 16, 'value': current_id}, {'id': 15, 'value': current.user.id}]
     sub_issue.save()
 
     if parent_task_id:
         redmine_server.issue_relation.create(issue_id=sub_issue.id, issue_to_id=parent_task_id,
                                              relation_type='follows')
+
