@@ -3,7 +3,8 @@ import configparser
 import requests
 from redmine import Redmine
 
-from stepik_utils import get_comment, get_comment_ids
+from google_utlis import load_links_from_google
+from stepik_utils import get_comment_ids, get_comment
 
 config = configparser.ConfigParser()
 config.read('settings.properties')
@@ -16,9 +17,16 @@ redmine_host = config['redmine']['api_host']
 redmine_api_key = config['redmine']['api_key']
 project_name = config['redmine']['project']
 
-link = 'https://stepik.org/lesson/%D0%A1%D0%B5%D0%BC%D0%B8%D0%BD%D0%B0%D1%80-5-%D0%9A%D1%80%D0%B8%D1%82%D0%B5%D1%80%D0%B8%D0%B8-%D1%81%D0%BE%D0%B3%D0%BB%D0%B0%D1%81%D0%B8%D1%8F-42256/step/2?discussion=356722&reply=356960'
 
+sheet_id = config['google']['sheet_id']
+sheet_range = config['google']['sheet_range']
 
+# Load all urls from google file (TODO check color status - api cannot do this?)
+all_links = load_links_from_google(sheet_id, sheet_range)
+# Transform links to ids
+all_ids = sorted(map(lambda x: get_comment_ids(x), all_links))
+
+# Connect to stepik
 auth = requests.auth.HTTPBasicAuth(client_id, client_secret)
 resp = requests.post('https://stepik.org/oauth2/token/',
                      data={'grant_type': 'client_credentials'},
@@ -27,39 +35,43 @@ token = resp.json().get('access_token')
 if not token:
     raise RuntimeWarning('Client id/secret is probably incorrect')
 
-root_id, comment_id = get_comment_ids(link)
-
-root_comment = get_comment(stepik_api_host, token, root_id)
-current_comment = get_comment(stepik_api_host, token, comment_id)
-
+# Connect to redmine
 redmine_server = Redmine(redmine_host, key=redmine_api_key)
 
-project = redmine_server.project.get(project_name)
 
-# 1 - Comment id
+def create_new_task(comment):
+    issue = redmine_server.issue.new()
+    issue.project_id = project_name
+    issue.subject = 'User {} comment {}'.format(comment.user, current_id)
+    issue.description = '{} \n\n {}'.format(comment.text, comment.link)
+    issue.custom_fields = [{'id': 16, 'value': current_id}, {'id': 15, 'value': comment.user.id}]
+    issue.save()
 
-issue = redmine_server.issue.new()
-issue.project_id = project_name
-issue.subject = 'User {} comment {}'.format(root_comment.user, root_id)
-issue.description = root_comment.text
-issue.custom_fields = [{'id': 1, 'value': root_id}]
-issue.save()
-
-parent_id = redmine_server.issue.filter(project_id=project_name, cf_1=root_id)[0].id
+    return issue
 
 
-sub_issue = redmine_server.issue.new()
-sub_issue.project_id = project_name
-sub_issue.subject = 'User {} comment {}'.format(current_comment.user, comment_id)
-sub_issue.description = current_comment.text
-# TODO: parent not work?
-sub_issue.parent_issue_id = parent_id
-sub_issue.custom_fields = [{'id': 1, 'value': comment_id}]
-sub_issue.save()
+for parent_id, current_id, link in all_ids:
+    # Try to load root and current comments
+    # parent = get_comment(stepik_api_host, token, parent_id)
+    current = get_comment(stepik_api_host, token, current_id, link)
 
+    if not current:
+        print("skip", current_id)
+        continue
 
+    # search existing in redmine
+    parent_task = redmine_server.issue.filter(project_id=project_name, cf_16=parent_id)
+    parent_task_id = parent_task[0].id if parent_task else None
 
-# try relations
-relation = redmine_server.issue_relation.create(issue_id=sub_issue.id, issue_to_id=sub_issue.parent_issue_id,
-                                                relation_type='follows')
+    current_task = redmine_server.issue.filter(project_id=project_name, cf_16=current_id)
+    if current_task:
+        print("Already created for:", current_id)
+        continue
+
+    # Create new task if not found
+    sub_issue = create_new_task(current)
+
+    if parent_task_id:
+        redmine_server.issue_relation.create(issue_id=sub_issue.id, issue_to_id=parent_task_id,
+                                             relation_type='follows')
 
