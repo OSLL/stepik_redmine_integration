@@ -43,7 +43,8 @@ def create_new_task(comment):
     issue = redmine_server.issue.new()
     issue.project_id = project_name
     issue.subject = 'User {} comment {}'.format(comment.user, current_id)
-    issue.description = '{} \n\n {}'.format(comment.text, comment.link)
+    issue.description = '{} \n\n {} \n\n {}/users/{}'.format(comment.text, comment.link,
+                                                             stepik_api_host, comment.user.id)
     issue.custom_fields = [{'id': 16, 'value': current_id}, {'id': 15, 'value': comment.user.id}]
     issue.save()
 
