@@ -1,5 +1,6 @@
 import os
 from functools import reduce
+from urllib.parse import unquote
 
 import httplib2
 
@@ -62,6 +63,6 @@ def load_links_from_google(sheet_id, range_name):
     result = service.spreadsheets().values().get(spreadsheetId=sheet_id, range=range_name).execute()
     values = result.get('values', [])
 
-    return reduce(lambda x, y: x + y, values, [])
+    return list(map(unquote, reduce(lambda x, y: x + y, values, [])))
 
 
