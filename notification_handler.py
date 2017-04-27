@@ -14,10 +14,12 @@ if not init_redmine(config['redmine']['api_host'], config['redmine']['api_key'],
     raise RuntimeError('Cannot connect to redmine server')
 
 
+handled = 0
 for notification in Notification.auto_paging_iter(is_unread=True, type='comments'):
-    # comment = Comment.get_chain(notification)
+    comment = Comment.get_chain(notification)
 
-    # if sync_comment_chain(comment):
-    notification.make_read()
+    if sync_comment_chain(comment):
+        handled += int(notification.make_read())
 
+print(handled, 'notifications were handled')
 

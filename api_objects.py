@@ -68,13 +68,10 @@ class StepikObject(dict):
     def api_base(cls):
         return None
 
-    def request(self, method, url, params=None, data=None):
+    def request(self, method, url, params=None, json_data=None):
         if params is None:
             params = self._retrieve_params
-
-        response = api.request(method, url, params, data)
-        print(response)
-
+        response = api.request(method, url, params, json_data)
         return map_retrieved_objects(response)
 
     def __str__(self):
@@ -153,6 +150,12 @@ class ListObject(StepikObject):
         return getattr(self, self.__class__.resource_name(), []).__iter__()
 
 
+class UpdatableAPIResource(APIResource):
+    def save(self, json_data):
+        self.refresh_from(self.request('put', self.instance_url(), json_data=json_data))
+        return self
+
+
 class MetaInf(dict):
     def __getattr__(self, k):
         return self[k]
@@ -166,13 +169,14 @@ class MetaInf(dict):
         return cls(values)
 
 
-class Notification(ListableAPIResource, ListObject):
+class Notification(ListableAPIResource, ListObject, UpdatableAPIResource):
     @classmethod
     def resource_name(cls):
         return 'notifications'
 
     def make_read(self):
-        print('making read')
+        self.save({'notification': {'is_unread': False}})
+        return True
 
 
 class User(APIResource):
