@@ -1,4 +1,5 @@
 import json
+from urllib import parse
 
 import requests
 
@@ -61,7 +62,13 @@ class StepikAPIRequestor(object):
 
         if method == 'get':
             if params:
-                print('params detected')
+                query = dict_to_tuples(params)
+                request_url = '{}?{}'.format(request_url, parse.urlencode(list(query)))
+        elif method == 'post':
+            if params:
+                print('unsupported')
+                # query = dict_to_tuples(params)
+                # request_url = '{}?{}'.format(request_url, parse.urlencode(list(query)))
         else:
             raise APIError('Unrecognized HTTP method {}'.format(method))
 
@@ -79,3 +86,11 @@ class StepikAPIRequestor(object):
         if code != 200:
             self.handle_api_error(body, code, resp, headers)
         return resp
+
+
+def dict_to_tuples(data):
+    for key, value in data.items():
+        if value is None:
+            continue
+        else:
+            yield (key, value)
