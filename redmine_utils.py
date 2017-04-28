@@ -3,6 +3,8 @@ from redmine import Redmine
 USER_ID_CUSTOM_FIELD = 15
 COMMENT_ID_CUSTOM_FIELD = 16
 STATUS_CUSTOM_FIELD = 17
+MUTED_STATUS = 'muted'
+ANSWERED_STATUS = 'answered'
 DEFAULT_STATUS = 'to look at'
 USEFUL_INFO_ID = 261
 COMMENT_CHAIN_ID = 262
@@ -63,8 +65,17 @@ def sync_comment_chain(comment):
             redmine_server.issue.update(root_issue.id, notes='{} \n\n {} \n\n {}'.format(c.cleaned_text, comment.link,
                                                                                          c.user.link))
     elif not is_root:
+        status = root_issue.custom_fields.get(STATUS_CUSTOM_FIELD).value
+        if status == MUTED_STATUS:
+            # skip muted comments
+            return True
+
         # Here root task already in redmine, we add only current task as a comment
         redmine_server.issue.update(root_issue.id, notes='{} \n\n {} \n\n {}'.format(comment.cleaned_text,
                                                                                      comment.link, comment.user.link))
+        if status == ANSWERED_STATUS:
+            # Change answered on to look at with new comments
+            redmine_server.issue.update(root_issue.id, custom_fields=[{'id': STATUS_CUSTOM_FIELD,
+                                                                       'value': DEFAULT_STATUS}])
 
     return True
