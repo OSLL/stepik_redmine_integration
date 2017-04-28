@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3
+
 import configparser
 
 from api_objects import init_stepik, Comment
