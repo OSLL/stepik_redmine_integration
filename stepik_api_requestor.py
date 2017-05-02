@@ -1,4 +1,5 @@
 import json
+from urllib import parse
 
 import requests
 
@@ -38,8 +39,8 @@ class StepikAPIRequestor(object):
         self.token = token
         return True
 
-    def request(self, method, url, params=None):
-        response = self.request_raw(method.lower(), url, params)
+    def request(self, method, url, params=None, json_data=None):
+        response = self.request_raw(method.lower(), url, params, json_data)
         body, code, headers = response.content, response.status_code, response.headers
         resp = self.handle_response(body, code, headers)
         return resp
@@ -53,7 +54,7 @@ class StepikAPIRequestor(object):
 
         raise APIError(err.get('message'), body, code, resp, headers)
 
-    def request_raw(self, method, url, params=None):
+    def request_raw(self, method, url, params=None, json_data=None):
         if not self.token:
             raise APIError('Try to request without token')
 
@@ -61,13 +62,19 @@ class StepikAPIRequestor(object):
 
         if method == 'get':
             if params:
-                print('params detected')
+                query = dict_to_tuples(params)
+                request_url = '{}?{}'.format(request_url, parse.urlencode(list(query)))
+        elif method == 'put':
+            if params:
+                print('unsupported')
+                # query = dict_to_tuples(params)
+                # request_url = '{}?{}'.format(request_url, parse.urlencode(list(query)))
         else:
             raise APIError('Unrecognized HTTP method {}'.format(method))
 
         headers = {'Authorization': 'Bearer ' + self.token}
 
-        return requests.request(method, request_url, headers=headers)
+        return requests.request(method, request_url, headers=headers, json=json_data)
 
     def handle_response(self, body, code, headers):
         try:
@@ -79,3 +86,11 @@ class StepikAPIRequestor(object):
         if code != 200:
             self.handle_api_error(body, code, resp, headers)
         return resp
+
+
+def dict_to_tuples(data):
+    for key, value in data.items():
+        if value is None:
+            continue
+        else:
+            yield (key, value)

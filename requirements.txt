@@ -1,0 +1,4 @@
+python_redmine==1.5.1
+httplib2==0.10.3
+requests==2.13.0
+google_api_python_client==1.6.2
