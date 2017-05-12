@@ -156,6 +156,12 @@ class UpdatableAPIResource(APIResource):
         return self
 
 
+class CreatableAPIResource(APIResource):
+    def create(self, json_data, **params):
+        self.refresh_from(self.request('post', self.base_url(), params, json_data=json_data))
+        return self
+
+
 class MetaInf(dict):
     def __getattr__(self, k):
         return self[k]
@@ -189,7 +195,7 @@ class User(APIResource):
         return '{}/users/{}'.format(api.api_base, self.id)
 
 
-class Comment(APIResource):
+class Comment(CreatableAPIResource):
     def __init__(self, id=None, **params):
         super().__init__(id, **params)
         self.all_comments = {}
@@ -252,3 +258,8 @@ class Comment(APIResource):
     def get_chain(cls, notification):
         comment_link = link_from_text(api.api_base, notification.html_text)
         return cls.retrieve(link=comment_link)
+
+    def reply_to(self, text):
+        return self.create({'comment': {'target': self.target, 'parent': self.id,
+                                        'thread': self.thread,
+                                        'text': text}})

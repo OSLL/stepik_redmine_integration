@@ -67,8 +67,9 @@ class StepikAPIRequestor(object):
         elif method == 'put':
             if params:
                 print('unsupported')
-                # query = dict_to_tuples(params)
-                # request_url = '{}?{}'.format(request_url, parse.urlencode(list(query)))
+        elif method == 'post':
+            if params:
+                print('unsupported')
         else:
             raise APIError('Unrecognized HTTP method {}'.format(method))
 
@@ -83,7 +84,7 @@ class StepikAPIRequestor(object):
             resp = json.loads(body)
         except Exception:
             raise APIError('Invalid response body from API({}): {}'.format(code, body), body, code, headers)
-        if code != 200:
+        if code != 200 and code != 201:
             self.handle_api_error(body, code, resp, headers)
         return resp
 
