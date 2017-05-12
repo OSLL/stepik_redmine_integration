@@ -55,16 +55,7 @@ def sync_comment_chain(comment):
     is_root = comment.parent is None
     created, root_issue = get_or_create_issue(comment.parent or comment, category=COMMENT_CHAIN_ID,
                                               initial_status='to look at')
-    if created:
-        # Here we create a new task and load all comments as chain
-        for i, c in comment.all_comments.items():
-            if is_root and c.id == comment.id:
-                # skip self-adding as a comment
-                continue
-
-            redmine_server.issue.update(root_issue.id, notes='{} \n\n {} \n\n {}'.format(c.cleaned_text, comment.link,
-                                                                                         c.user.link))
-    elif not is_root:
+    if not is_root:
         status = root_issue.custom_fields.get(STATUS_CUSTOM_FIELD).value
         if status == MUTED_STATUS:
             # skip muted comments

@@ -231,7 +231,7 @@ class Comment(APIResource):
 
         users = {u['id']: u for u in values['users']}
         all_comments = dict(map(transform, chain))
-        self.refresh_from(all_comments.pop(current))
+        self.refresh_from(all_comments.get(current))
 
         if self.parent:
             self.parent = all_comments.pop(self.parent)
