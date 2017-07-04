@@ -8,6 +8,7 @@ ANSWERED_STATUS = 'answered'
 DEFAULT_STATUS = 'to look at'
 USEFUL_INFO_ID = 261
 COMMENT_CHAIN_ID = 262
+ASSIGNED_TO_ID = 5
 
 redmine_server = None
 project_name = None
@@ -46,6 +47,7 @@ def get_or_create_issue(comment, category=USEFUL_INFO_ID, initial_status=None):
 
     issue.custom_fields = cf
     issue.category_id = category
+    issue.assigned_to_id = ASSIGNED_TO_ID
     issue.save()
 
     return True, issue
