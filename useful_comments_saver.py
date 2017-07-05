@@ -6,8 +6,10 @@ from api_objects import init_stepik, Comment
 from google_utlis import load_links_from_google
 from redmine_utils import get_or_create_issue, init_redmine
 
+SETTINGS_FILE_PATH = '/home/jenkins/settings.properties'
+
 config = configparser.ConfigParser()
-config.read('settings.properties')
+config.read(SETTINGS_FILE_PATH)
 
 all_links = load_links_from_google(config['google']['sheet_id'], config['google']['sheet_range'])
 

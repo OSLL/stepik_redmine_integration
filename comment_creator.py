@@ -4,8 +4,10 @@ import configparser
 
 from api_objects import init_stepik, Comment
 
+SETTINGS_FILE_PATH = '/home/jenkins/settings.properties'
+
 config = configparser.ConfigParser()
-config.read('settings.properties')
+config.read(SETTINGS_FILE_PATH)
 
 if not init_stepik(config['stepik']['api_host'], config['stepik']['client_id'],
                    config['stepik']['client_secret']):
