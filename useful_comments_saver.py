@@ -6,7 +6,7 @@ from api_objects import init_stepik, Comment
 from google_utlis import load_links_from_google
 from redmine_utils import get_or_create_issue, init_redmine
 
-SETTINGS_FILE_PATH = '/home/jenkins/settings.properties'
+SETTINGS_FILE_PATH = 'settings.properties'
 
 config = configparser.ConfigParser()
 config.read(SETTINGS_FILE_PATH)

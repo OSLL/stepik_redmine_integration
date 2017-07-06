@@ -5,7 +5,7 @@ import configparser
 from api_objects import init_stepik, Notification, Comment
 from redmine_utils import sync_comment_chain, init_redmine
 
-SETTINGS_FILE_PATH = '/home/jenkins/settings.properties'
+SETTINGS_FILE_PATH = 'settings.properties'
 
 config = configparser.ConfigParser()
 config.read(SETTINGS_FILE_PATH)
