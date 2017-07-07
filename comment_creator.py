@@ -21,9 +21,11 @@ def init():
 def answer_to_comment_on_stepik():
     comments = 0
     for issue in issues:
-        comment_id, user_id, note = get_data_from_issue_to_answer_on_stepik(issue)
-        if note:
-            Comment.retrieve(int(comment_id)).reply_to(note)
+        print()
+        comment_id, user_id, notes = get_data_from_issue_to_answer_on_stepik(issue)
+        if notes:
+            for note in notes:
+                Comment.retrieve(int(comment_id)).reply_to(note)
             set_issue_answered_on_stepik_status(issue)
             comments += 1
     return comments

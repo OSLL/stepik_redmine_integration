@@ -1,5 +1,4 @@
 from redmine import Redmine
-import requests
 
 USER_ID_CUSTOM_FIELD = 15
 COMMENT_ID_CUSTOM_FIELD = 16
@@ -70,27 +69,41 @@ def get_or_create_issue(comment, category=USEFUL_INFO_ID, initial_status=None):
     issue.category_id = category
     issue.assigned_to_id = ASSIGNED_TO_ID
     issue.save()
-
     return True, issue
 
 
-def sync_comment_chain(comment):
-    is_root = comment.parent is None
-    created, root_issue = get_or_create_issue(comment.parent or comment, category=COMMENT_CHAIN_ID,
+def update_chain(root_issue, comments):
+    for comment in comments['all_comments'].values():
+
+        if comment['parent']:
+            redmine_server.issue.update(root_issue.id, notes='{} \n\n {} \n\n {}'.format(comment.cleaned_text,
+                                                                                         comments.link,
+                                                                                         comment.user.link))
+
+
+def sync_comment_chain(comments):
+    is_root = comments.parent is None
+    created, root_issue = get_or_create_issue(comments.parent or comments, category=COMMENT_CHAIN_ID,
                                               initial_status=DEFAULT_STATUS)
-    if not is_root:
+    if is_root:
+        update_chain(root_issue, comments)
+
+    else:
         status = root_issue.custom_fields.get(STATUS_CUSTOM_FIELD).value
         if status == MUTED_STATUS:
             # skip muted comments
             return True
 
         # Here root task already in redmine, we add only current task as a comment
-        redmine_server.issue.update(root_issue.id, notes='{} \n\n {} \n\n {}'.format(comment.cleaned_text,
-                                                                                     comment.link, comment.user.link))
+        redmine_server.issue.update(root_issue.id,
+                                    notes='{} \n\n {} \n\n {}'.format(comments.cleaned_text,
+                                                                      comments.link, comments.user.link),
+                                    custom_fields=[{ID: ON_STEPIK_FIELD, VALUE: NO}])
         if status == ANSWERED_STATUS:
             # Change answered on to look at with new comments
             redmine_server.issue.update(root_issue.id, custom_fields=[{ID: STATUS_CUSTOM_FIELD,
-                                                                       VALUE: DEFAULT_STATUS}])
+                                                                       VALUE: DEFAULT_STATUS},
+                                                                      {ID: ON_STEPIK_FIELD, VALUE: NO}])
 
     return True
 
@@ -101,14 +114,24 @@ def set_issue_answered_on_stepik_status(issue):
 
 def get_data_from_issue_to_answer_on_stepik(issue):
     list_resources = issue.custom_fields[RESOURCES]
+    print(get_cf_value_by_name(list_resources, ON_STEPIK))
     comment_id = get_cf_value_by_name(list_resources, COMMENT_ID)
     user_id = get_cf_value_by_name(list_resources, USER_ID)
-    journals = issue.journals
-    journal_attr = journals[len(journals)-1][JOURNAL_ATTRIBUTES]
-    note = ''
-    if journal_attr[USER][ID] in possible_users and journal_attr[NOTES] != '':
-        note = journal_attr[NOTES]
-    return comment_id, user_id, note
+    notes = get_notes_from_issue_journals(issue.journals)
+    return comment_id, user_id, notes
+
+
+def get_notes_from_issue_journals(journals):
+    journal_len = len(journals)
+    notes = []
+    print(len(journals))
+    for i in range(journal_len-1,-1,-1):
+        journal_attr = journals[i][JOURNAL_ATTRIBUTES]
+        if journal_attr[USER][ID] not in possible_users:
+            break
+        if journal_attr[NOTES] != '':
+            notes.append(journal_attr[NOTES])
+    return notes
 
 
 def get_cf_value_by_name(list_resources, name):
