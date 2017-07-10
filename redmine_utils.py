@@ -74,11 +74,12 @@ def get_or_create_issue(comment, category=USEFUL_INFO_ID, initial_status=None):
 
 def update_chain(root_issue, comments):
     for comment in comments['all_comments'].values():
-
         if comment['parent']:
-            redmine_server.issue.update(root_issue.id, notes='{} \n\n {} \n\n {}'.format(comment.cleaned_text,
+            user_full_name = '@' + comment.user.full_name.replace(' ', '_')
+            redmine_server.issue.update(root_issue.id, notes='{} \n\n {} \n\n {} \n\n {}'.format(comment.cleaned_text,
                                                                                          comments.link,
-                                                                                         comment.user.link))
+                                                                                         comment.user.link,
+                                                                                         user_full_name))
 
 
 def sync_comment_chain(comments):
@@ -87,17 +88,19 @@ def sync_comment_chain(comments):
                                               initial_status=DEFAULT_STATUS)
     if is_root:
         update_chain(root_issue, comments)
-
     else:
         status = root_issue.custom_fields.get(STATUS_CUSTOM_FIELD).value
         if status == MUTED_STATUS:
             # skip muted comments
             return True
-
+        user_full_name = '@' + comments.user.full_name.replace(' ', '_')
         # Here root task already in redmine, we add only current task as a comment
         redmine_server.issue.update(root_issue.id,
-                                    notes='{} \n\n {} \n\n {}'.format(comments.cleaned_text,
-                                                                      comments.link, comments.user.link),
+                                    notes='{} \n\n {} \n\n {} \n\n {}'.format(
+                                        comments.cleaned_text,
+                                        comments.link,
+                                        comments.user.link,
+                                        user_full_name),
                                     custom_fields=[{ID: ON_STEPIK_FIELD, VALUE: NO}])
         if status == ANSWERED_STATUS:
             # Change answered on to look at with new comments
