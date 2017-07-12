@@ -244,6 +244,7 @@ class Comment(CreatableAPIResource):
         self.all_comments = all_comments
         return self
 
+
     @classmethod
     def retrieve(cls, id=None, link=None, **params):
         parent = None
@@ -254,12 +255,22 @@ class Comment(CreatableAPIResource):
         comment = super().retrieve(id, parent=parent, step_url=link_prefix, **params)
         return comment
 
+
     @classmethod
     def get_chain(cls, notification):
         comment_link = link_from_text(api.api_base, notification.html_text)
         return cls.retrieve(link=comment_link)
 
+
     def reply_to(self, text):
         return self.create({'comment': {'target': self.target, 'parent': self.id,
                                         'thread': self.thread,
                                         'text': text}})
+
+    @classmethod
+    def get_comments_text(cls, link):
+        comment = cls.retrieve(link=link)
+        comments = []
+        for value in comment['all_comments'].values():
+            comments.append(remove_html_tags(value['text']))
+        return comments

@@ -7,8 +7,6 @@ ON_STEPIK_FIELD = 18
 MUTED_STATUS = 'muted'
 ANSWERED_STATUS = 'answered'
 DEFAULT_STATUS = 'to look at'
-USEFUL_INFO_ID = 261
-COMMENT_CHAIN_ID = 262
 ASSIGNED_TO_ID = 5
 QUERY_ID_AJILE = 215
 
@@ -44,7 +42,7 @@ def get_server():
     return redmine_server
 
 
-def get_or_create_issue(comment, category=USEFUL_INFO_ID, initial_status=None):
+def get_or_create_issue(comment, initial_status=None):
     if not redmine_server:
         print('Init redmine connection before creating task')
         return
@@ -66,7 +64,6 @@ def get_or_create_issue(comment, category=USEFUL_INFO_ID, initial_status=None):
         cf.append({'id': STATUS_CUSTOM_FIELD, 'value': initial_status})
 
     issue.custom_fields = cf
-    issue.category_id = category
     issue.assigned_to_id = ASSIGNED_TO_ID
     issue.save()
     return True, issue
@@ -84,8 +81,7 @@ def update_chain(root_issue, comments):
 
 def sync_comment_chain(comments):
     is_root = comments.parent is None
-    created, root_issue = get_or_create_issue(comments.parent or comments, category=COMMENT_CHAIN_ID,
-                                              initial_status=DEFAULT_STATUS)
+    created, root_issue = get_or_create_issue(comments.parent or comments, initial_status=DEFAULT_STATUS)
     if is_root:
         update_chain(root_issue, comments)
     else:
@@ -117,17 +113,15 @@ def set_issue_answered_on_stepik_status(issue):
 
 def get_data_from_issue_to_answer_on_stepik(issue):
     list_resources = issue.custom_fields[RESOURCES]
-    print(get_cf_value_by_name(list_resources, ON_STEPIK))
     comment_id = get_cf_value_by_name(list_resources, COMMENT_ID)
     user_id = get_cf_value_by_name(list_resources, USER_ID)
-    notes = get_notes_from_issue_journals(issue.journals)
+    notes = get_possible_users_notes_from_issue_journals(issue.journals)
     return comment_id, user_id, notes
 
 
-def get_notes_from_issue_journals(journals):
+def get_possible_users_notes_from_issue_journals(journals):
     journal_len = len(journals)
     notes = []
-    print(len(journals))
     for i in range(journal_len-1,-1,-1):
         journal_attr = journals[i][JOURNAL_ATTRIBUTES]
         if journal_attr[USER][ID] not in possible_users:
@@ -135,6 +129,21 @@ def get_notes_from_issue_journals(journals):
         if journal_attr[NOTES] != '':
             notes.append(journal_attr[NOTES])
     return notes
+
+
+def get_all_comments_from_issue_notes(journals):
+    notes = []
+    for journal in journals:
+        journal_attr = journal[JOURNAL_ATTRIBUTES]
+        if journal_attr[NOTES] != '':
+            note = journal_attr[NOTES].split('\n\n')[0]
+            notes.insert(0, note)
+    return notes
+
+
+def get_link_to_comment_from_issue(issue):
+    description = issue.description.replace('\r','')
+    return description.split('\n\n')[1].strip()
 
 
 def get_cf_value_by_name(list_resources, name):
@@ -148,3 +157,10 @@ def get_answered_issues_from_project():
         print('Init redmine connection before creating task')
         return
     return redmine_server.issue.filter(project_id=project_name, cf_17=ANSWERED_STATUS, cf_18=NO)
+
+
+def get_to_look_at_issues_from_project():
+    if not redmine_server:
+        print('Init redmine connection before creating task')
+        return
+    return redmine_server.issue.filter(project_id=project_name, cf_17=DEFAULT_STATUS, cf_18=NO)
