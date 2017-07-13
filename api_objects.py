@@ -19,7 +19,8 @@ def convert_to_stepik_object(object_name, resp):
         'users': User,
         'user': User,
         'notifications': Notification,
-        'meta': MetaInf
+        'meta': MetaInf,
+        'subscriptions':Subscribe
     }
     if isinstance(resp, list):
         return list(filter(None, [convert_to_stepik_object(object_name, i) for i in resp]))
@@ -51,6 +52,7 @@ class StepikObject(dict):
         return self[k]
 
     def __setattr__(self, k, v):
+        print(k, v)
         self[k] = v
         return None
 
@@ -61,7 +63,9 @@ class StepikObject(dict):
         return instance
 
     def refresh_from(self, values):
+        print(values)
         for k, v in values.items():
+            print(k, v)
             super(StepikObject, self).__setitem__(k, convert_to_stepik_object(k, v))
 
     @classmethod
@@ -118,7 +122,6 @@ class ListableAPIResource(APIResource):
         url = cls.base_url()
         response = api.request('get', url, params)
         stepik_object = convert_to_stepik_object(cls.resource_name(), response)
-        stepik_object._retrieve_params = params
         return stepik_object
 
 
@@ -143,7 +146,6 @@ class ListObject(StepikObject):
     def retrieve(self, id, **params):
         base = self.get('url')
         url = "{}/{}".format(base, id)
-
         return self.request('get', url, params)
 
     def __iter__(self):
@@ -182,6 +184,23 @@ class Notification(ListableAPIResource, ListObject, UpdatableAPIResource):
 
     def make_read(self):
         self.save({'notification': {'is_unread': False}})
+        return True
+
+
+class Subscribe(UpdatableAPIResource):
+    def __init__(self, id=None):
+        StepikObject(id=id)
+        self.__setattr__('id', id)
+        self.__setattr__('_retrieve_params', {})
+
+
+    @classmethod
+    def resource_name(cls):
+        return 'subscriptions'
+
+
+    def make_read(self):
+        self.save({'subscriptions': {"is_active": True}})
         return True
 
 

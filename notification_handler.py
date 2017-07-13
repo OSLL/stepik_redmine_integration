@@ -2,7 +2,7 @@
 
 import configparser
 
-from api_objects import init_stepik, Notification, Comment
+from api_objects import init_stepik, Notification, Comment, Subscribe
 from redmine_utils import sync_comment_chain, init_redmine
 
 SETTINGS_FILE_PATH = 'settings.properties'
@@ -20,10 +20,17 @@ if not init_redmine(config['redmine']['api_host'], config['redmine']['api_key'],
 
 handled = 0
 for notification in Notification.auto_paging_iter(is_unread=True, type='comments'):
+
     comment = Comment.get_chain(notification)
 
-    if sync_comment_chain(comment):
-        handled += int(notification.make_read())
+    # if sync_comment_chain(comment):
+    #     handled += int(notification.make_read())
+    print('======================================================')
 
-print(handled, 'notifications were handled')
+    id = comment['subscriptions'][0]
+    subscribe = Subscribe(id)
+
+    subscribe.make_read()
+
+#print(handled, 'notifications were handled')
 
