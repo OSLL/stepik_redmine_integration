@@ -283,10 +283,3 @@ class Comment(CreatableAPIResource):
                                         'thread': self.thread,
                                         'text': text}})
 
-    @classmethod
-    def get_comments_text(cls, link):
-        comment = cls.retrieve(link=link)
-        comments = []
-        for value in comment['all_comments'].values():
-            comments.append(remove_html_tags(value['text']))
-        return comments
