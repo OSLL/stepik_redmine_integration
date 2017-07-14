@@ -36,5 +36,4 @@ if __name__ == '__main__':
     init()
     issues = get_answered_issues_from_project()
     comments = answer_to_comment_on_stepik()
-    print(Comment.retrieve(int(413604)))
     print(comments, 'comments were answered')
