@@ -43,6 +43,7 @@ class StepikAPIRequestor(object):
         response = self.request_raw(method.lower(), url, params, json_data)
         body, code, headers = response.content, response.status_code, response.headers
         resp = self.handle_response(body, code, headers)
+
         return resp
 
     @staticmethod

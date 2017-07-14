@@ -19,7 +19,8 @@ def convert_to_stepik_object(object_name, resp):
         'users': User,
         'user': User,
         'notifications': Notification,
-        'meta': MetaInf
+        'meta': MetaInf,
+        'subscriptions':Subscribe
     }
     if isinstance(resp, list):
         return list(filter(None, [convert_to_stepik_object(object_name, i) for i in resp]))
@@ -143,7 +144,6 @@ class ListObject(StepikObject):
     def retrieve(self, id, **params):
         base = self.get('url')
         url = "{}/{}".format(base, id)
-
         return self.request('get', url, params)
 
     def __iter__(self):
@@ -182,6 +182,22 @@ class Notification(ListableAPIResource, ListObject, UpdatableAPIResource):
 
     def make_read(self):
         self.save({'notification': {'is_unread': False}})
+        return True
+
+
+class Subscribe(UpdatableAPIResource):
+    def __init__(self, id=None):
+        self.__setattr__('id', id)
+        self.__setattr__('_retrieve_params', {})
+
+
+    @classmethod
+    def resource_name(cls):
+        return 'subscriptions'
+
+
+    def make_read(self):
+        self.save({'subscriptions': {"is_active": True}})
         return True
 
 
@@ -244,6 +260,7 @@ class Comment(CreatableAPIResource):
         self.all_comments = all_comments
         return self
 
+
     @classmethod
     def retrieve(cls, id=None, link=None, **params):
         parent = None
@@ -254,12 +271,15 @@ class Comment(CreatableAPIResource):
         comment = super().retrieve(id, parent=parent, step_url=link_prefix, **params)
         return comment
 
+
     @classmethod
     def get_chain(cls, notification):
         comment_link = link_from_text(api.api_base, notification.html_text)
         return cls.retrieve(link=comment_link)
 
+
     def reply_to(self, text):
         return self.create({'comment': {'target': self.target, 'parent': self.id,
                                         'thread': self.thread,
                                         'text': text}})
+
