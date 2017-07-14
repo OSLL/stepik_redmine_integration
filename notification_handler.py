@@ -4,8 +4,17 @@ import configparser
 
 from api_objects import init_stepik, Notification, Comment
 from redmine_utils import sync_comment_chain, init_redmine
+import argparse
 
-SETTINGS_FILE_PATH = 'settings.properties'
+
+def get_path():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--path", type=str, default='./')
+    args = parser.parse_args()
+    return (args.path)
+
+
+SETTINGS_FILE_PATH = get_path() + 'settings.properties'
 
 config = configparser.ConfigParser()
 config.read(SETTINGS_FILE_PATH)

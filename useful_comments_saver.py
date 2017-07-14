@@ -1,12 +1,19 @@
 #!/usr/local/bin/python3
-
+import argparse
 import configparser
 
 from api_objects import init_stepik, Comment
 from google_utlis import load_links_from_google
 from redmine_utils import get_or_create_issue, init_redmine
 
-SETTINGS_FILE_PATH = 'settings.properties'
+def get_path():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--path", type=str, default='./')
+    args = parser.parse_args()
+    return (args.path)
+
+
+SETTINGS_FILE_PATH = get_path() + 'settings.properties'
 
 config = configparser.ConfigParser()
 config.read(SETTINGS_FILE_PATH)

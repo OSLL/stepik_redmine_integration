@@ -1,12 +1,20 @@
 #!/usr/local/bin/python3
-
+import argparse
 import configparser
 
 from api_objects import init_stepik, Comment
 from redmine_utils import init_redmine, get_answered_issues_from_project, get_data_from_issue_to_answer_on_stepik, \
     set_issue_answered_on_stepik_status
 
-SETTINGS_FILE_PATH = 'settings.properties'
+def get_path():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--path", type=str, default='./')
+    args = parser.parse_args()
+    return (args.path)
+
+
+SETTINGS_FILE_PATH = get_path() + 'settings.properties'
+
 
 
 def init():
