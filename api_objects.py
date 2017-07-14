@@ -52,7 +52,6 @@ class StepikObject(dict):
         return self[k]
 
     def __setattr__(self, k, v):
-        print(k, v)
         self[k] = v
         return None
 
@@ -63,9 +62,7 @@ class StepikObject(dict):
         return instance
 
     def refresh_from(self, values):
-        print(values)
         for k, v in values.items():
-            print(k, v)
             super(StepikObject, self).__setitem__(k, convert_to_stepik_object(k, v))
 
     @classmethod
@@ -189,7 +186,6 @@ class Notification(ListableAPIResource, ListObject, UpdatableAPIResource):
 
 class Subscribe(UpdatableAPIResource):
     def __init__(self, id=None):
-        StepikObject(id=id)
         self.__setattr__('id', id)
         self.__setattr__('_retrieve_params', {})
 

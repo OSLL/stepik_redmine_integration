@@ -23,14 +23,13 @@ for notification in Notification.auto_paging_iter(is_unread=True, type='comments
 
     comment = Comment.get_chain(notification)
 
-    # if sync_comment_chain(comment):
-    #     handled += int(notification.make_read())
-    print('======================================================')
+    if not comment['is_deleted']:
+        if sync_comment_chain(comment):
+            handled += int(notification.make_read())
 
-    id = comment['subscriptions'][0]
-    subscribe = Subscribe(id)
+        subscribe = Subscribe(comment['subscriptions'][0])
 
-    subscribe.make_read()
+        subscribe.make_read()
 
-#print(handled, 'notifications were handled')
+print(handled, 'notifications were handled')
 

@@ -84,7 +84,6 @@ def sync_comment_chain(comments):
     created, root_issue = get_or_create_issue(comments.parent or comments, initial_status=DEFAULT_STATUS)
     if is_root:
         update_chain(root_issue, comments)
-        # subscribe_to_chain(comments) # апдейтить каждый subscribe
     else:
         status = root_issue.custom_fields.get(STATUS_CUSTOM_FIELD).value
         if status == MUTED_STATUS:
