@@ -119,6 +119,7 @@ class ListableAPIResource(APIResource):
         url = cls.base_url()
         response = api.request('get', url, params)
         stepik_object = convert_to_stepik_object(cls.resource_name(), response)
+        stepik_object._retrieve_params = params
         return stepik_object
 
 
